@@ -11,6 +11,13 @@ def ensure_dir_exists(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+def clear_download_directory(directory):
+    """Remove all files in the download directory."""
+    for f in os.listdir(directory):
+        file_path = os.path.join(directory, f)
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+
 def generate_unique_filename(title, ext):
     """Generate a unique filename using the title and a timestamp."""
     timestamp = int(time.time())
@@ -19,6 +26,7 @@ def generate_unique_filename(title, ext):
 def download_youtube_media(url, format_id='18', custom_name=None):
     """Download video or audio using the specified format ID and rename if custom_name is provided."""
     ensure_dir_exists(SAVE_DIR)
+    clear_download_directory(SAVE_DIR)  # Clear old files
     
     ydl_opts = {
         'outtmpl': f'{SAVE_DIR}/%(title)s.%(ext)s',
@@ -54,6 +62,7 @@ def download_youtube_media(url, format_id='18', custom_name=None):
 def download_youtube_audio(url, custom_name=None):
     """Download audio from YouTube video and convert to MP3 with optional custom name."""
     ensure_dir_exists(SAVE_DIR)
+    clear_download_directory(SAVE_DIR)  # Clear old files
     
     ydl_opts = {
         'format': 'bestaudio/best',  # Download best audio format available
