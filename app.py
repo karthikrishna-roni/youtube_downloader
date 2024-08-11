@@ -11,7 +11,6 @@ def ensure_dir_exists(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-
 def download_youtube_media(url, format_id='18', custom_name=None):
     """Download video or audio using the specified format ID and rename if custom_name is provided."""
     ensure_dir_exists(SAVE_DIR)
@@ -59,14 +58,12 @@ def main():
     st.title('YouTube Downloader')
 
     video_url = st.text_input('Enter the YouTube video URL:')
-    # if video_url:
     download_type = st.radio('Select download type:', ['Video', 'Audio'])
     custom_name = st.text_input('Enter a custom name for the file (optional):')
 
     if download_type == 'Video':
-        # format_id = st.text_input('Enter the desired format ID (or leave blank for best):')
         if st.button('Pull Video'):
-            file_path = download_youtube_media(video_url,'best', custom_name)
+            file_path = download_youtube_media(video_url, 'best', custom_name)
             if file_path:
                 st.success('Video downloaded successfully!')
                 with open(file_path, 'rb') as f:
@@ -93,6 +90,11 @@ def main():
                     )
             else:
                 st.error('Failed to download audio.')
+
+    # Add a button to clear the cache
+    if st.button('Clear Cache'):
+        st.cache_data.clear()
+        st.success("Cache cleared successfully!")
 
 if __name__ == "__main__":
     main()
