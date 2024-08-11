@@ -1,7 +1,7 @@
 import yt_dlp
 import streamlit as st
 import os
-import subprocess
+import time
 
 # Directory to save the downloaded files
 SAVE_DIR = './downloads'
@@ -11,11 +11,15 @@ def ensure_dir_exists(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+def generate_unique_filename(title, ext):
+    """Generate a unique filename using the title and a timestamp."""
+    timestamp = int(time.time())
+    return f"{title}_{timestamp}.{ext}"
+
 def download_youtube_media(url, format_id='18', custom_name=None):
     """Download video or audio using the specified format ID and rename if custom_name is provided."""
     ensure_dir_exists(SAVE_DIR)
-    filename_template = '%(title)s.%(ext)s' if not custom_name else f'{custom_name}.%(ext)s'
-    filename = os.path.join(SAVE_DIR, filename_template)
+    
     ydl_opts = {
         'outtmpl': f'{SAVE_DIR}/%(title)s.%(ext)s',
         'ffmpeg_location': '/path/to/ffmpeg',  # Update this path
@@ -30,29 +34,52 @@ def download_youtube_media(url, format_id='18', custom_name=None):
         ydl.download([url])
 
     # Find the downloaded file
-    files = [f for f in os.listdir(SAVE_DIR) if os.path.isfile(os.path.join(SAVE_DIR, f))]
-    if files:
-        return os.path.join(SAVE_DIR, files[-1])
-    return None
+    title = None
+    files = os.listdir(SAVE_DIR)
+    for f in files:
+        if f.endswith('.mp4') or f.endswith('.mkv') or f.endswith('.webm'):  # Add other video formats if needed
+            title, ext = os.path.splitext(f)
+            ext = ext[1:]  # remove the dot
+            break
+    else:
+        return None
+
+    new_filename = generate_unique_filename(title, ext)
+    new_filepath = os.path.join(SAVE_DIR, new_filename)
+    
+    os.rename(os.path.join(SAVE_DIR, f"{title}.{ext}"), new_filepath)
+
+    return new_filepath
 
 def download_youtube_audio(url, custom_name=None):
     """Download audio from YouTube video and convert to MP3 with optional custom name."""
     ensure_dir_exists(SAVE_DIR)
-    filename_template = '%(title)s.%(ext)s' if not custom_name else f'{custom_name}.%(ext)s'
-    filename = os.path.join(SAVE_DIR, filename_template)
+    
     ydl_opts = {
         'format': 'bestaudio/best',  # Download best audio format available
-        'outtmpl': filename,
+        'outtmpl': f'{SAVE_DIR}/%(title)s.%(ext)s',
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])
 
     # Find the downloaded file
-    files = [f for f in os.listdir(SAVE_DIR) if os.path.isfile(os.path.join(SAVE_DIR, f))]
-    if files:
-        return os.path.join(SAVE_DIR, files[-1])
-    return None
+    title = None
+    files = os.listdir(SAVE_DIR)
+    for f in files:
+        if f.endswith('.mp3') or f.endswith('.webm'):  # Add other audio formats if needed
+            title, ext = os.path.splitext(f)
+            ext = ext[1:]  # remove the dot
+            break
+    else:
+        return None
+
+    new_filename = generate_unique_filename(title, ext)
+    new_filepath = os.path.join(SAVE_DIR, new_filename)
+    
+    os.rename(os.path.join(SAVE_DIR, f"{title}.{ext}"), new_filepath)
+
+    return new_filepath
 
 def main():
     st.title('YouTube Downloader')
@@ -90,11 +117,6 @@ def main():
                     )
             else:
                 st.error('Failed to download audio.')
-
-    # Add a button to clear the cache
-    if st.button('Clear Cache'):
-        st.cache_data.clear()
-        st.success("Cache cleared successfully!")
 
 if __name__ == "__main__":
     main()
